@@ -1,7 +1,9 @@
 const TelegramBot = require('node-telegram-bot-api');
+
 const TOKEN = process.env.BOT_TOKEN;
 const bot = new TelegramBot(TOKEN, { polling: true });
 
+// Хранилище
 const users = new Map();
 const DAILY_FREE_SPINS = 3;
 const SPIN_COST = 10;
@@ -51,12 +53,13 @@ bot.onText(/\/start/, (msg) => {
     const username = msg.from.username || msg.from.first_name;
     getUser(userId, username);
     
-    bot.sendMessage(chatId, `🎰 Добро пожаловать в SpinMaster, ${username}!`, {
+    bot.sendMessage(chatId, `🎰 *SPINMASTER CASINO*\n\n🪙 100 монет бонусом!\n🎲 3 бесплатных вращения в день\n💎 Спин: ${SPIN_COST} монет\n\n👇 Жми кнопки!`, {
+        parse_mode: 'Markdown',
         reply_markup: {
             inline_keyboard: [
                 [{ text: '🎡 КРУТИТЬ!', callback_data: 'spin' }],
                 [{ text: '💰 Купить монеты', callback_data: 'buy' }],
-                [{ text: '📊 Профиль', callback_data: 'profile' }]
+                [{ text: '📊 Профиль', callback_data: 'profile' }, { text: '🏆 Топ', callback_data: 'top' }]
             ]
         }
     });
@@ -70,13 +73,14 @@ bot.on('callback_query', (query) => {
     
     if (query.data === 'spin') {
         let isFree = false;
+        
         if (user.spinsLeft > 0) {
             isFree = true;
             user.spinsLeft--;
         } else if (user.coins >= SPIN_COST) {
             user.coins -= SPIN_COST;
         } else {
-            bot.answerCallbackQuery(query.id, { text: 'Нет монет!', show_alert: true });
+            bot.answerCallbackQuery(query.id, { text: '❌ Нет монет! Купи за Stars', show_alert: true });
             return;
         }
         
@@ -86,21 +90,34 @@ bot.on('callback_query', (query) => {
         user.totalWon += prize.coins;
         
         bot.answerCallbackQuery(query.id);
-        bot.sendMessage(chatId, `🎡 Крутим... ${isFree ? '(бесплатно)' : `(-${SPIN_COST}🪙)`}\n\n✨ РЕЗУЛЬТАТ: ${prize.name}!\n+${prize.coins} 🪙\n\n💰 Баланс: ${user.coins} 🪙`);
+        bot.sendMessage(chatId, `🎡 *Крутим...* ${isFree ? '(бесплатно)' : `(-${SPIN_COST}🪙)`}\n\n✨ *РЕЗУЛЬТАТ:* ${prize.name}!\n+${prize.coins} 🪙\n\n💰 *Баланс:* ${user.coins} 🪙`, { parse_mode: 'Markdown' });
         return;
     }
     
     if (query.data === 'profile') {
         bot.answerCallbackQuery(query.id);
-        bot.sendMessage(chatId, `📊 ПРОФИЛЬ\n\n🪙 Монет: ${user.coins}\n🎡 Спинов: ${user.totalSpins}\n🏆 Выиграно: ${user.totalWon} 🪙\n🎲 Бесплатных сегодня: ${user.spinsLeft}`);
+        bot.sendMessage(chatId, `📊 *ПРОФИЛЬ*\n\n🪙 Монет: ${user.coins}\n🎡 Спинов: ${user.totalSpins}\n🏆 Выиграно: ${user.totalWon} 🪙\n🎲 Бесплатных сегодня: ${user.spinsLeft}`, { parse_mode: 'Markdown' });
+        return;
+    }
+    
+    if (query.data === 'top') {
+        const sorted = Array.from(users.values()).sort((a, b) => b.coins - a.coins).slice(0, 10);
+        let text = '🏆 *ТОП ИГРОКОВ*\n\n';
+        sorted.forEach((u, i) => text += `${i+1}. ${u.username} — ${u.coins} 🪙\n`);
+        bot.answerCallbackQuery(query.id);
+        bot.sendMessage(chatId, text || 'Пока никого', { parse_mode: 'Markdown' });
         return;
     }
     
     if (query.data === 'buy') {
         bot.answerCallbackQuery(query.id);
-        bot.sendMessage(chatId, `💎 ПОКУПКА МОНЕТ\n\n10⭐ = 100 🪙\n50⭐ = 600 🪙\n100⭐ = 1500 🪙\n\nПлатежи через Telegram Stars`);
+        bot.sendMessage(chatId, `💎 *КУПИТЬ МОНЕТЫ*\n\n10⭐ → 100 🪙\n50⭐ → 600 🪙 (+20%)\n100⭐ → 1500 🪙 (+50%)\n\n⚡ Платежи через Telegram Stars`, { parse_mode: 'Markdown' });
         return;
     }
 });
 
-console.log('✅ Бот работает');
+bot.on('polling_error', (error) => {
+    console.log('Polling error:', error.message);
+});
+
+console.log('✅ SpinMaster бот запущен!');
