@@ -7,7 +7,7 @@ const bot = new Telegraf(BOT_TOKEN);
 const DAILY_FREE_SPINS = 3;
 const SPIN_COST = 10;
 
-// Временное хранилище (в памяти, без KV)
+// Временное хранилище (в памяти)
 const users = new Map();
 
 const PRIZES = [
@@ -202,10 +202,16 @@ bot.action('back', async (ctx) => {
   await showMenu(ctx, ctx.from.id);
 });
 
-// ЗАПУСК - long polling, нахуй Vercel
+// ЗАПУСК - long polling
+console.log('🤖 Бот SpinMaster запущен и работает!');
 bot.launch();
-console.log('✅ Бот SpinMaster запущен!');
 
-// Graceful stop
-process.once('SIGINT', () => bot.stop('SIGINT'));
-process.once('SIGTERM', () => bot.stop('SIGTERM'));
+// Обработка остановки
+process.once('SIGINT', () => {
+  console.log('🛑 Бот остановлен');
+  bot.stop('SIGINT');
+});
+process.once('SIGTERM', () => {
+  console.log('🛑 Бот остановлен');
+  bot.stop('SIGTERM');
+});
