@@ -220,26 +220,46 @@ bot.action('back', async (ctx) => {
   await showMenu(ctx, ctx.from.id);
 });
 
-// ПРАВИЛЬНЫЙ handler для Vercel
+// В самый конец файла, замени handler на этот:
 export default async function handler(req, res) {
-  // Vercel передает res без метода status
-  // Используем res.statusCode вместо res.status()
+  // Разрешаем CORS для Telegram
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   
+  // Обрабатываем preflight запрос
+  if (req.method === 'OPTIONS') {
+    res.statusCode = 200;
+    res.end();
+    return;
+  }
+  
+  // Для GET запросов — проверка работоспособности
+  if (req.method === 'GET') {
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({ status: 'alive', bot: 'SpinMaster' }));
+    return;
+  }
+  
+  // Для POST запросов — вебхук Telegram
   if (req.method === 'POST') {
     try {
+      console.log('Received webhook update:', JSON.stringify(req.body).substring(0, 200));
       await bot.handleUpdate(req.body);
       res.statusCode = 200;
       res.setHeader('Content-Type', 'application/json');
       res.end(JSON.stringify({ ok: true }));
     } catch (err) {
-      console.error('Handler error:', err);
-      res.statusCode = 500;
+      console.error('Webhook error:', err);
+      res.statusCode = 200; // Telegram требует 200 даже при ошибках
       res.setHeader('Content-Type', 'application/json');
       res.end(JSON.stringify({ ok: false, error: err.message }));
     }
-  } else {
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({ status: 'alive', bot: 'SpinMaster' }));
+    return;
   }
+  
+  // Другие методы
+  res.statusCode = 405;
+  res.end();
 }
