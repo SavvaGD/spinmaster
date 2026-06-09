@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "functions": {
+    "main.js": {
+      "runtime": "nodejs20.x"
+    }
+  },
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/main.js"
+    }
+  ]
+}

@@ -79,7 +79,6 @@ bot.start(async (ctx) => {
   await showMenu(ctx, ctx.from.id);
 });
 
-// Крутить!
 bot.action(/spin_(\d+)/, async (ctx) => {
   const userId = parseInt(ctx.match[1]);
   if (userId !== ctx.from.id) {
@@ -121,7 +120,6 @@ bot.action(/spin_(\d+)/, async (ctx) => {
   }, 1500);
 });
 
-// Меню покупки
 bot.action('buy_menu', async (ctx) => {
   const keyboard = Markup.inlineKeyboard([
     [Markup.button.callback('🪙 100 монет = 10⭐', 'buy_10')],
@@ -143,7 +141,6 @@ bot.action('buy_menu', async (ctx) => {
   await ctx.answerCbQuery();
 });
 
-// Покупка через Stars
 bot.action(/buy_(\d+)/, async (ctx) => {
   const stars = parseInt(ctx.match[1]);
   let coins;
@@ -169,7 +166,6 @@ bot.action(/buy_(\d+)/, async (ctx) => {
   }
 });
 
-// Подтверждение платежа
 bot.on('pre_checkout_query', async (ctx) => {
   await ctx.answerPreCheckoutQuery(true);
 });
@@ -194,7 +190,6 @@ bot.on('successful_payment', async (ctx) => {
   await showMenu(ctx, userId);
 });
 
-// Профиль
 bot.action('profile', async (ctx) => {
   const user = await getUser(ctx.from.id, ctx.from.username);
   const keyboard = Markup.inlineKeyboard([Markup.button.callback('◀️ Назад', 'back')]);
@@ -211,7 +206,6 @@ bot.action('profile', async (ctx) => {
   await ctx.answerCbQuery();
 });
 
-// Топ
 bot.action('top', async (ctx) => {
   const keyboard = Markup.inlineKeyboard([Markup.button.callback('◀️ Назад', 'back')]);
   await ctx.editMessageText(
@@ -223,24 +217,22 @@ bot.action('top', async (ctx) => {
   await ctx.answerCbQuery();
 });
 
-// Назад
 bot.action('back', async (ctx) => {
   await showMenu(ctx, ctx.from.id);
 });
 
-// Запуск через long polling (для Vercel не нужно, но для локального запуска)
-if (process.env.NODE_ENV !== 'production') {
-  bot.launch();
-  console.log('Бот запущен через long polling');
-}
-
-// Для Vercel — экспортируем handler
+// Vercel serverless handler
 export default async function handler(req, res) {
-  try {
-    await bot.handleUpdate(req.body);
-    res.status(200).send('OK');
-  } catch (err) {
-    console.error('Webhook error:', err);
-    res.status(200).send('OK');
+  // Устанавливаем заголовки для Telegram
+  if (req.method === 'POST') {
+    try {
+      await bot.handleUpdate(req.body);
+      res.status(200).json({ ok: true });
+    } catch (err) {
+      console.error('Handler error:', err);
+      res.status(200).json({ ok: false, error: err.message });
+    }
+  } else {
+    res.status(200).json({ status: 'alive', bot: 'SpinMaster' });
   }
 }
