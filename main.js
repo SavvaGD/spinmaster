@@ -74,7 +74,6 @@ async function showMenu(ctx, userId) {
   }
 }
 
-// Команда /start
 bot.start(async (ctx) => {
   await showMenu(ctx, ctx.from.id);
 });
@@ -221,18 +220,26 @@ bot.action('back', async (ctx) => {
   await showMenu(ctx, ctx.from.id);
 });
 
-// Vercel serverless handler
+// ПРАВИЛЬНЫЙ handler для Vercel
 export default async function handler(req, res) {
-  // Устанавливаем заголовки для Telegram
+  // Vercel передает res без метода status
+  // Используем res.statusCode вместо res.status()
+  
   if (req.method === 'POST') {
     try {
       await bot.handleUpdate(req.body);
-      res.status(200).json({ ok: true });
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ ok: true }));
     } catch (err) {
       console.error('Handler error:', err);
-      res.status(200).json({ ok: false, error: err.message });
+      res.statusCode = 500;
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ ok: false, error: err.message }));
     }
   } else {
-    res.status(200).json({ status: 'alive', bot: 'SpinMaster' });
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({ status: 'alive', bot: 'SpinMaster' }));
   }
 }
