@@ -1,0 +1,12 @@
+{
+  "name": "spinmaster-bot",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node main.js"
+  },
+  "dependencies": {
+    "telegraf": "^4.15.3",
+    "@vercel/kv": "^1.0.1"
+  }
+}
