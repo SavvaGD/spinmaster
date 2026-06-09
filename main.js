@@ -16,3 +16,4 @@ bot.on('message', (msg) => {
 });
 
 console.log('✅ Бот запущен');
+console.log('молюсь чтоб запустилось');
