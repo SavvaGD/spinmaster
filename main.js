@@ -15,3 +15,4 @@ bot.onText(/\/start/, (msg) => {
 });
 
 console.log('🤖 Бот запущен');
+console.log('надеюсь заработает')
